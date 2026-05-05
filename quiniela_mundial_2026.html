@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiniela Mundial 2026</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f5; color: #111; min-height: 100vh; }
+  .app { max-width: 480px; margin: 0 auto; background: #fff; min-height: 100vh; padding-bottom: 80px; }
+  .header { padding: 1.5rem 1rem 1rem; text-align: center; border-bottom: 1px solid #eee; background: #fff; }
+  .header h1 { font-size: 20px; font-weight: 600; }
+  .header p { font-size: 13px; color: #888; margin-top: 4px; }
+  .nav { display: flex; gap: 0; background: #f0f0f0; border-radius: 12px; padding: 4px; margin: 12px 1rem; }
+  .nav button { flex: 1; padding: 8px 4px; border: none; background: transparent; cursor: pointer; font-size: 12px; font-weight: 400; color: #666; border-radius: 8px; transition: all 0.15s; }
+  .nav button.active { background: #fff; color: #111; font-weight: 600; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+  .section { display: none; padding: 0 1rem; }
+  .section.active { display: block; }
+  .card { background: #fff; border: 1px solid #eee; border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 12px; }
+  .card-title { font-size: 11px; font-weight: 600; color: #999; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.06em; }
+  .match-row { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid #f0f0f0; }
+  .match-row:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
+  .team-name { font-size: 13px; color: #111; }
+  .team-name.right { text-align: right; }
+  .score-inputs { display: flex; align-items: center; gap: 4px; }
+  .score-input { width: 36px; height: 36px; text-align: center; font-size: 16px; font-weight: 600; border: 1px solid #ddd; border-radius: 8px; background: #fafafa; color: #111; -moz-appearance: textfield; }
+  .score-input::-webkit-outer-spin-button, .score-input::-webkit-inner-spin-button { -webkit-appearance: none; }
+  .score-input:focus { outline: none; border-color: #3b82f6; background: #eff6ff; }
+  .score-sep { font-size: 14px; color: #aaa; }
+  .group-header { font-size: 13px; font-weight: 600; color: #111; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .group-badge { background: #dbeafe; color: #1e40af; font-size: 11px; padding: 2px 8px; border-radius: 6px; font-weight: 600; }
+  .group-teams { font-size: 11px; color: #888; font-weight: 400; }
+  .btn-primary { width: 100%; padding: 13px; background: #111; color: #fff; border: none; border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 1rem; }
+  .btn-primary:active { opacity: 0.85; transform: scale(0.99); }
+  .btn-secondary { width: 100%; padding: 11px; background: transparent; color: #111; border: 1px solid #ddd; border-radius: 12px; font-size: 14px; cursor: pointer; margin-top: 8px; font-weight: 500; }
+  .player-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f0f0f0; }
+  .player-row:last-child { border-bottom: none; }
+  .player-name { font-size: 15px; color: #111; }
+  .player-pts { font-size: 22px; font-weight: 600; color: #111; }
+  .rank-badge { width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; flex-shrink: 0; }
+  .rank-1 { background: #fef3c7; color: #92400e; }
+  .rank-2 { background: #e5e7eb; color: #374151; }
+  .rank-3 { background: #fed7aa; color: #7c2d12; }
+  .rank-other { background: #f3f4f6; color: #9ca3af; }
+  .stat-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 12px; }
+  .stat-card { background: #f9fafb; border-radius: 10px; padding: 12px; }
+  .stat-label { font-size: 12px; color: #888; margin-bottom: 4px; }
+  .stat-val { font-size: 22px; font-weight: 600; color: #111; }
+  .input-group { margin-bottom: 12px; }
+  .input-label { font-size: 13px; color: #666; margin-bottom: 6px; display: block; }
+  .text-input { width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 15px; background: #fff; color: #111; }
+  .text-input:focus { outline: none; border-color: #3b82f6; }
+  .phase-btn { padding: 8px 14px; border: 1px solid #ddd; border-radius: 8px; background: transparent; color: #666; font-size: 13px; cursor: pointer; margin-right: 6px; margin-bottom: 8px; font-weight: 500; }
+  .phase-btn.active { background: #111; color: #fff; border-color: transparent; }
+  .adv-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
+  .adv-pick { display: flex; align-items: center; gap: 6px; padding: 8px 10px; border: 1px solid #eee; border-radius: 8px; font-size: 13px; color: #111; cursor: pointer; background: #fff; text-align: left; }
+  .adv-pick.selected { border-color: #3b82f6; background: #eff6ff; color: #1e40af; }
+  .check { width: 16px; height: 16px; border-radius: 4px; border: 1px solid #ddd; background: #f5f5f5; display: flex; align-items: center; justify-content: center; font-size: 11px; flex-shrink: 0; }
+  .adv-pick.selected .check { background: #3b82f6; border-color: #3b82f6; color: white; }
+  .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #111; color: #fff; padding: 10px 20px; border-radius: 12px; font-size: 14px; opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 100; white-space: nowrap; }
+  .toast.show { opacity: 1; }
+  .admin-section { background: #f9fafb; border-radius: 10px; padding: 10px 12px; margin-bottom: 10px; }
+  .admin-match { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 6px; padding: 7px 0; border-bottom: 1px solid #eee; }
+  .admin-match:last-child { border-bottom: none; }
+  .pts-legend { font-size: 13px; color: #555; margin-bottom: 14px; line-height: 2; background: #f9fafb; border-radius: 8px; padding: 10px 12px; }
+  .empty-state { text-align: center; padding: 2rem; color: #aaa; font-size: 14px; }
+  .player-detail { font-size: 11px; color: #aaa; }
+  .saved-badge { display: inline-block; background: #dcfce7; color: #166534; font-size: 11px; padding: 2px 8px; border-radius: 6px; font-weight: 600; margin-left: 8px; }
+  @media (prefers-color-scheme: dark) {
+    body { background: #0a0a0a; color: #f0f0f0; }
+    .app { background: #111; }
+    .header { background: #111; border-bottom-color: #222; }
+    .nav { background: #222; }
+    .nav button.active { background: #333; color: #f0f0f0; }
+    .card { background: #1a1a1a; border-color: #222; }
+    .card-title { color: #666; }
+    .team-name { color: #f0f0f0; }
+    .score-input { background: #222; border-color: #333; color: #f0f0f0; }
+    .score-input:focus { background: #1e3a5f; border-color: #3b82f6; }
+    .group-badge { background: #1e3a5f; color: #93c5fd; }
+    .btn-primary { background: #f0f0f0; color: #111; }
+    .btn-secondary { color: #f0f0f0; border-color: #333; }
+    .player-name { color: #f0f0f0; }
+    .player-pts { color: #f0f0f0; }
+    .stat-card { background: #1a1a1a; }
+    .stat-label { color: #666; }
+    .stat-val { color: #f0f0f0; }
+    .text-input { background: #1a1a1a; border-color: #333; color: #f0f0f0; }
+    .adv-pick { background: #1a1a1a; border-color: #333; color: #f0f0f0; }
+    .adv-pick.selected { background: #1e3a5f; border-color: #3b82f6; color: #93c5fd; }
+    .check { background: #222; border-color: #444; }
+    .admin-section { background: #1a1a1a; }
+    .admin-match { border-bottom-color: #222; }
+    .pts-legend { background: #1a1a1a; color: #aaa; }
+    .match-row { border-bottom-color: #222; }
+    .player-row { border-bottom-color: #222; }
+    .toast { background: #f0f0f0; color: #111; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <h1>⚽ Quiniela Mundial 2026</h1>
+    <p>Canadá · México · Estados Unidos</p>
+  </div>
+
+  <div class="nav">
+    <button class="active" onclick="showTab('pronosticos',this)">Pronósticos</button>
+    <button onclick="showTab('tabla',this)">Tabla</button>
+    <button onclick="showTab('admin',this)">Admin</button>
+    <button onclick="showTab('info',this)">Info</button>
+  </div>
+
+  <!-- PRONÓSTICOS -->
+  <div id="pronosticos" class="section active">
+    <div id="player-setup" class="card">
+      <div class="card-title">¿Quién eres?</div>
+      <div class="input-group">
+        <label class="input-label">Tu nombre</label>
+        <input type="text" class="text-input" id="player-name-input" placeholder="Ej: Carlos, Abuela Marta..." />
+      </div>
+      <button class="btn-primary" onclick="startPronosticos()">Entrar a mis pronósticos →</button>
+    </div>
+
+    <div id="pronostico-main" style="display:none;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+        <div style="font-size:15px;font-weight:600;" id="welcome-name"></div>
+        <button onclick="changePlayer()" style="font-size:12px;color:#888;background:none;border:none;cursor:pointer;padding:4px 8px;">Cambiar →</button>
+      </div>
+
+      <div style="display:flex;flex-wrap:wrap;margin-bottom:12px;">
+        <button class="phase-btn active" onclick="selectPhase(this,'grupos')">Fase de grupos</button>
+        <button class="phase-btn" onclick="selectPhase(this,'adv')">Clasificados</button>
+      </div>
+
+      <div id="phase-grupos">
+        <div id="groups-container"></div>
+        <button class="btn-primary" onclick="savePronosticos()">Guardar mis pronósticos ✓</button>
+      </div>
+
+      <div id="phase-adv" style="display:none;">
+        <div id="adv-container"></div>
+        <button class="btn-primary" onclick="saveAdv()">Guardar selecciones ✓</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TABLA -->
+  <div id="tabla" class="section">
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-label">Participantes</div><div class="stat-val" id="stat-players">0</div></div>
+      <div class="stat-card"><div class="stat-label">Pozo total</div><div class="stat-val" id="stat-pozo">Q0</div></div>
+      <div class="stat-card"><div class="stat-label">Partidos con resultado</div><div class="stat-val" id="stat-matches">0</div></div>
+      <div class="stat-card"><div class="stat-label">Puntos máximos</div><div class="stat-val" id="stat-maxpts">0</div></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Posiciones</div>
+      <div id="rankings-list"><div class="empty-state">Aún no hay pronósticos guardados</div></div>
+    </div>
+  </div>
+
+  <!-- ADMIN -->
+  <div id="admin" class="section">
+    <div class="card">
+      <div class="card-title">Panel de administrador</div>
+      <div class="pts-legend">
+        🟢 Resultado correcto (1/X/2): <strong>3 pts</strong><br>
+        🎯 Marcador exacto: <strong>+2 pts → total 5 pts</strong><br>
+        🏆 Clasificado a siguiente fase: <strong>2 pts por equipo</strong><br>
+        ⭐ Campeón del mundial: <strong>10 pts</strong>
+      </div>
+      <div style="font-size:13px;color:#888;margin-bottom:10px;">Ingresa los resultados reales:</div>
+      <div id="admin-groups"></div>
+      <button class="btn-primary" onclick="applyResults()">Calcular puntos de todos ↻</button>
+      <button class="btn-secondary" onclick="exportData()">Copiar tabla para WhatsApp</button>
+    </div>
+  </div>
+
+  <!-- INFO -->
+  <div id="info" class="section">
+    <div class="card">
+      <div class="card-title">Cómo usar</div>
+      <div style="font-size:14px;color:#444;line-height:1.9;">
+        <p><strong>1.</strong> Cada participante entra, escribe su nombre y llena sus pronósticos de los 48 partidos.</p>
+        <p style="margin-top:8px;"><strong>2.</strong> En "Clasificados" elige 2 equipos por grupo que pasen a la siguiente fase, y el campeón.</p>
+        <p style="margin-top:8px;"><strong>3.</strong> El administrador ingresa los resultados reales en "Admin" y presiona calcular.</p>
+        <p style="margin-top:8px;"><strong>4.</strong> La tabla de posiciones se actualiza automáticamente.</p>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Sistema de puntos</div>
+      <table style="width:100%;font-size:13px;border-collapse:collapse;">
+        <tr style="border-bottom:1px solid #f0f0f0;"><td style="padding:8px 0;color:#555;">Resultado correcto (1/X/2)</td><td style="text-align:right;font-weight:600;">3 pts</td></tr>
+        <tr style="border-bottom:1px solid #f0f0f0;"><td style="padding:8px 0;color:#555;">Marcador exacto</td><td style="text-align:right;font-weight:600;">+2 pts</td></tr>
+        <tr style="border-bottom:1px solid #f0f0f0;"><td style="padding:8px 0;color:#555;">Clasificado correcto</td><td style="text-align:right;font-weight:600;">2 pts</td></tr>
+        <tr><td style="padding:8px 0;color:#555;">Campeón del mundial</td><td style="text-align:right;font-weight:600;">10 pts</td></tr>
+      </table>
+    </div>
+    <div class="card">
+      <div class="card-title">Grupos del mundial 2026</div>
+      <div style="font-size:13px;color:#555;line-height:2;" id="groups-info-list"></div>
+    </div>
+    <div class="card" style="background:#fff8f0;border-color:#fde8cc;">
+      <div class="card-title" style="color:#c2440a;">Acerca del mundial</div>
+      <div style="font-size:13px;color:#555;line-height:1.9;">
+        📅 Junio – Julio 2026<br>
+        🌎 Sede: Canadá, México y Estados Unidos<br>
+        ⚽ 48 equipos — 104 partidos en total<br>
+        🏆 Primera Copa del Mundo con 48 selecciones
+      </div>
+    </div>
+    <button class="btn-secondary" onclick="resetAll()" style="margin-top:4px;color:#dc2626;border-color:#fca5a5;">Reiniciar todos los datos</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const GROUPS = {
+  A: ['México','USA','Ecuador','Qatar'],
+  B: ['España','Croacia','Marruecos','Argelia'],
+  C: ['Brasil','Colombia','Paraguay','Túnez'],
+  D: ['Argentina','Chile','Bolivia','Arabia Saudita'],
+  E: ['Francia','Bélgica','Eslovaquia','Camerún'],
+  F: ['Inglaterra','Países Bajos','Serbia','Irán'],
+  G: ['Portugal','Turquía','Chequia','Ghana'],
+  H: ['Alemania','Uruguay','Senegal','Sudáfrica'],
+  I: ['Italia','Ucrania','Costa Rica','Perú'],
+  J: ['Japón','Australia','Honduras','Canadá'],
+  K: ['Corea del Sur','Nigeria','Nueva Zelanda','Guatemala'],
+  L: ['Polonia','Suecia','Costa de Marfil','Venezuela']
+};
+
+function getMatches(g) {
+  const t = GROUPS[g];
+  return [[t[0],t[1]],[t[0],t[2]],[t[0],t[3]],[t[1],t[2]],[t[1],t[3]],[t[2],t[3]]];
+}
+
+let state = {};
+try { state = JSON.parse(localStorage.getItem('quiniela2026') || '{}'); } catch(e) {}
+if (!state.players) state.players = {};
+if (!state.results) state.results = {};
+
+let currentPlayer = null;
+
+function save() {
+  try { localStorage.setItem('quiniela2026', JSON.stringify(state)); } catch(e) {}
+}
+
+function showTab(tab, btn) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById(tab).classList.add('active');
+  if (btn) btn.classList.add('active');
+  if (tab === 'tabla') renderRankings();
+  if (tab === 'admin') renderAdmin();
+  if (tab === 'info') renderGroupsInfo();
+}
+
+function startPronosticos() {
+  const name = document.getElementById('player-name-input').value.trim();
+  if (!name) { showToast('Escribe tu nombre primero'); return; }
+  currentPlayer = name;
+  if (!state.players[name]) state.players[name] = { pronosticos: {}, adv: [], champion: '', pts: 0 };
+  save();
+  document.getElementById('player-setup').style.display = 'none';
+  document.getElementById('pronostico-main').style.display = 'block';
+  document.getElementById('welcome-name').innerHTML = 'Hola, ' + name + ' 👋';
+  renderGroupMatches();
+  renderAdvPicks();
+}
+
+function changePlayer() {
+  currentPlayer = null;
+  document.getElementById('player-setup').style.display = 'block';
+  document.getElementById('pronostico-main').style.display = 'none';
+  document.getElementById('player-name-input').value = '';
+}
+
+function selectPhase(btn, phase) {
+  document.querySelectorAll('.phase-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('phase-grupos').style.display = phase === 'grupos' ? 'block' : 'none';
+  document.getElementById('phase-adv').style.display = phase === 'adv' ? 'block' : 'none';
+}
+
+function renderGroupMatches() {
+  const container = document.getElementById('groups-container');
+  container.innerHTML = '';
+  const saved = state.players[currentPlayer]?.pronosticos || {};
+  const filled = Object.keys(saved).length;
+  if (filled > 0) {
+    container.innerHTML += `<div style="text-align:center;font-size:13px;color:#888;margin-bottom:12px;">${filled} partidos guardados — puedes editar tus pronósticos</div>`;
+  }
+  Object.keys(GROUPS).forEach(g => {
+    const matches = getMatches(g);
+    let html = `<div class="card"><div class="group-header"><span class="group-badge">Grupo ${g}</span><span class="group-teams">${GROUPS[g].join(' · ')}</span></div>`;
+    matches.forEach((m, i) => {
+      const key = `${g}_${i}`;
+      const sv = saved[key] || {};
+      html += `<div class="match-row">
+        <span class="team-name">${m[0]}</span>
+        <div class="score-inputs">
+          <input type="number" class="score-input" id="s_${key}_h" value="${sv.h !== undefined ? sv.h : ''}" min="0" max="20" placeholder="-">
+          <span class="score-sep">:</span>
+          <input type="number" class="score-input" id="s_${key}_a" value="${sv.a !== undefined ? sv.a : ''}" min="0" max="20" placeholder="-">
+        </div>
+        <span class="team-name right">${m[1]}</span>
+      </div>`;
+    });
+    html += '</div>';
+    container.innerHTML += html;
+  });
+}
+
+function renderAdvPicks() {
+  const container = document.getElementById('adv-container');
+  const saved = state.players[currentPlayer]?.adv || [];
+  let html = '';
+  Object.keys(GROUPS).forEach(g => {
+    const teams = GROUPS[g];
+    const selCount = saved.filter(t => teams.includes(t)).length;
+    html += `<div class="card"><div class="group-header"><span class="group-badge">Grupo ${g}</span><span class="group-teams">Elige 2 clasificados ${selCount > 0 ? '('+selCount+'/2)' : ''}</span></div><div class="adv-grid">`;
+    teams.forEach(t => {
+      const sel = saved.includes(t) ? 'selected' : '';
+      html += `<button class="adv-pick ${sel}" onclick="toggleAdv(this,'${t}','${g}')" data-team="${t}">
+        <span class="check">${sel ? '✓' : ''}</span>${t}
+      </button>`;
+    });
+    html += '</div></div>';
+  });
+  html += `<div class="card">
+    <div class="group-header">⭐ Campeón del mundial</div>
+    <input type="text" class="text-input" id="champion-input" placeholder="Nombre del equipo campeón..." value="${state.players[currentPlayer]?.champion || ''}">
+    <div style="font-size:12px;color:#aaa;margin-top:6px;">Acierto = 10 puntos extra</div>
+  </div>`;
+  container.innerHTML = html;
+}
+
+function toggleAdv(btn, team, group) {
+  const player = state.players[currentPlayer];
+  if (!player.adv) player.adv = [];
+  if (btn.classList.contains('selected')) {
+    btn.classList.remove('selected');
+    btn.querySelector('.check').textContent = '';
+    player.adv = player.adv.filter(t => t !== team);
+  } else {
+    const groupTeams = GROUPS[group];
+    const selInGroup = player.adv.filter(t => groupTeams.includes(t));
+    if (selInGroup.length >= 2) { showToast('Solo puedes elegir 2 clasificados por grupo'); return; }
+    btn.classList.add('selected');
+    btn.querySelector('.check').textContent = '✓';
+    player.adv.push(team);
+  }
+  save();
+  const groupTeams = GROUPS[group];
+  const selCount = player.adv.filter(t => groupTeams.includes(t)).length;
+  const header = btn.closest('.card').querySelector('.group-teams');
+  if (header) header.textContent = `Elige 2 clasificados (${selCount}/2)`;
+}
+
+function savePronosticos() {
+  if (!currentPlayer) return;
+  const player = state.players[currentPlayer];
+  if (!player.pronosticos) player.pronosticos = {};
+  let filled = 0;
+  Object.keys(GROUPS).forEach(g => {
+    getMatches(g).forEach((_, i) => {
+      const key = `${g}_${i}`;
+      const h = document.getElementById(`s_${key}_h`)?.value;
+      const a = document.getElementById(`s_${key}_a`)?.value;
+      if (h !== '' && a !== '') {
+        player.pronosticos[key] = { h: parseInt(h), a: parseInt(a) };
+        filled++;
+      }
+    });
+  });
+  save();
+  showToast('✅ ' + filled + ' partidos guardados para ' + currentPlayer);
+}
+
+function saveAdv() {
+  if (!currentPlayer) return;
+  const champ = document.getElementById('champion-input')?.value.trim();
+  if (champ) state.players[currentPlayer].champion = champ;
+  const advCount = (state.players[currentPlayer].adv || []).length;
+  save();
+  showToast('✅ ' + advCount + ' clasificados y campeón guardados');
+}
+
+function renderRankings() {
+  const list = document.getElementById('rankings-list');
+  const players = Object.entries(state.players);
+  if (!players.length) {
+    list.innerHTML = '<div class="empty-state">Aún no hay participantes registrados</div>';
+    document.getElementById('stat-players').textContent = '0';
+    document.getElementById('stat-pozo').textContent = 'Q0';
+    document.getElementById('stat-matches').textContent = '0';
+    document.getElementById('stat-maxpts').textContent = '0';
+    return;
+  }
+  const sorted = players.sort((a, b) => (b[1].pts || 0) - (a[1].pts || 0));
+  list.innerHTML = sorted.map(([name, data], i) => {
+    const rankClass = i === 0 ? 'rank-1' : i === 1 ? 'rank-2' : i === 2 ? 'rank-3' : 'rank-other';
+    const pron = Object.keys(data.pronosticos || {}).length;
+    const adv = (data.adv || []).length;
+    return `<div class="player-row">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div class="rank-badge ${rankClass}">${i + 1}</div>
+        <div>
+          <div class="player-name">${name}</div>
+          <div class="player-detail">${pron} partidos · ${adv} clasificados</div>
+        </div>
+      </div>
+      <div style="text-align:right;">
+        <div class="player-pts">${data.pts || 0}</div>
+        <div style="font-size:11px;color:#aaa;">pts</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  const count = players.length;
+  document.getElementById('stat-players').textContent = count;
+  document.getElementById('stat-pozo').textContent = 'Q' + (count * 200).toLocaleString();
+  document.getElementById('stat-matches').textContent = Object.keys(state.results).length;
+  const max = sorted[0] ? (sorted[0][1].pts || 0) : 0;
+  document.getElementById('stat-maxpts').textContent = max;
+}
+
+function renderAdmin() {
+  const container = document.getElementById('admin-groups');
+  let html = '';
+  Object.keys(GROUPS).forEach(g => {
+    const matches = getMatches(g);
+    html += `<div class="admin-section"><div style="font-size:13px;font-weight:600;margin-bottom:8px;color:#555;">Grupo ${g} — ${GROUPS[g].join(', ')}</div>`;
+    matches.forEach((m, i) => {
+      const key = `${g}_${i}`;
+      const res = state.results[key] || {};
+      html += `<div class="admin-match">
+        <span style="font-size:12px;color:#555;">${m[0]}</span>
+        <div class="score-inputs">
+          <input type="number" class="score-input" id="r_${key}_h" value="${res.h !== undefined ? res.h : ''}" min="0" max="20" placeholder="-" style="width:34px;height:34px;font-size:14px;">
+          <span class="score-sep">:</span>
+          <input type="number" class="score-input" id="r_${key}_a" value="${res.a !== undefined ? res.a : ''}" min="0" max="20" placeholder="-" style="width:34px;height:34px;font-size:14px;">
+        </div>
+        <span style="font-size:12px;text-align:right;color:#555;">${m[1]}</span>
+      </div>`;
+    });
+    html += '</div>';
+  });
+  container.innerHTML = html;
+}
+
+function applyResults() {
+  let savedCount = 0;
+  Object.keys(GROUPS).forEach(g => {
+    getMatches(g).forEach((_, i) => {
+      const key = `${g}_${i}`;
+      const h = document.getElementById(`r_${key}_h`)?.value;
+      const a = document.getElementById(`r_${key}_a`)?.value;
+      if (h !== '' && a !== '') {
+        state.results[key] = { h: parseInt(h), a: parseInt(a) };
+        savedCount++;
+      }
+    });
+  });
+
+  const allAdv = getAllClassified();
+
+  Object.keys(state.players).forEach(name => {
+    const player = state.players[name];
+    let pts = 0;
+    Object.entries(state.results).forEach(([key, real]) => {
+      const pred = player.pronosticos?.[key];
+      if (!pred) return;
+      const realRes = real.h > real.a ? 1 : real.h < real.a ? 2 : 0;
+      const predRes = pred.h > pred.a ? 1 : pred.h < pred.a ? 2 : 0;
+      if (realRes === predRes) pts += 3;
+      if (pred.h === real.h && pred.a === real.a) pts += 2;
+    });
+    (player.adv || []).forEach(team => {
+      if (allAdv.includes(team)) pts += 2;
+    });
+    player.pts = pts;
+  });
+
+  save();
+  showToast('✅ Puntos calculados — ' + savedCount + ' partidos procesados');
+}
+
+function getAllClassified() {
+  return [];
+}
+
+function exportData() {
+  const players = Object.entries(state.players).sort((a, b) => (b[1].pts || 0) - (a[1].pts || 0));
+  let text = '⚽ QUINIELA MUNDIAL 2026\n';
+  text += '━━━━━━━━━━━━━━━━━━━━\n';
+  players.forEach(([name, data], i) => {
+    const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}.`;
+    text += `${medal} ${name}: ${data.pts || 0} pts\n`;
+  });
+  text += '━━━━━━━━━━━━━━━━━━━━\n';
+  text += `💰 Pozo: Q${(players.length * 200).toLocaleString()}\n`;
+  text += `👥 ${players.length} participantes`;
+  try {
+    navigator.clipboard.writeText(text).then(() => showToast('✅ Tabla copiada para WhatsApp'));
+  } catch(e) {
+    prompt('Copia este texto:', text);
+  }
+}
+
+function renderGroupsInfo() {
+  const el = document.getElementById('groups-info-list');
+  if (!el) return;
+  el.innerHTML = Object.entries(GROUPS).map(([g, teams]) =>
+    `<strong>Grupo ${g}:</strong> ${teams.join(', ')}<br>`
+  ).join('');
+}
+
+function resetAll() {
+  if (confirm('¿Seguro que quieres borrar TODOS los datos de la quiniela? Esta acción no se puede deshacer.')) {
+    try { localStorage.removeItem('quiniela2026'); } catch(e) {}
+    state = { players: {}, results: {} };
+    showToast('Datos borrados');
+    changePlayer();
+    document.getElementById('player-name-input').value = '';
+  }
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+renderGroupsInfo();
+</script>
+</body>
+</html>
